@@ -17,8 +17,10 @@
           block: |
             net.ipv4.ip_forward=1
       - name: Generate wireguard keys
-        shell: umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+        shell: umask 077; wg genkey | tee {{ wireguard_path }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
+      - name: Generate wireguard preshared key
+        shell: wg genpsk | tee {{ wireguard_path }}/presharedkey
       - name: Read client private key
         slurp:
           src: "{{ wireguard_path }}/privatekey"
@@ -27,10 +29,15 @@
         slurp:
           src: "{{ wireguard_path }}/publickey"
         register: client_public_key
+      - name: Template server config 
+        template:
+          src: ../templates/wireguard-conf.j2
+          dest: ../templates/wireguard-conf-updated.j2
+        delegate_to: local
   - hosts: wireguard
     become: true
-    vars:
-      wireguard_path: "/etc/wireguard"
+    vars_file:
+      - vars.yml
     tasks:
       - name: Install wireguard
         apt:
@@ -56,7 +63,7 @@
         register: server_public_key
       - name: Template wireguard configuration file 
         template:
-          src: ../templates/wireguard-conf.j2
+          src: ../templates/wireguard-conf-updated.j2
           dest: "{{ wireguard_path }}/wg0.conf"
           owner: root 
           group: root
@@ -68,23 +75,23 @@
           name: wg-quick@wg0
           enabled: yes
           state: started
-  - hosts: local
-    become: true
-    vars:
-      wireguard_path: "/etc/wireguard"
-    connection: local
-    tasks:
-      - name: Template wireguard client file 
-        template:
-          src: ../templates/wireguard-client.j2
-          dest: "{{ wireguard_path }}/wg0.conf"
-          owner: root 
-          group: root
-          mode: '0644'
-      - name: Start wireguard tunnel
-        shell: wg-quick up wg0
-      - name: Enable wg systemd file 
-        systemd:
-          name: wg-quick@wg0
-          enabled: yes
-          state: started
+  # - hosts: local
+  #   become: true
+  #   vars:
+  #     wireguard_path: "/etc/wireguard"
+  #   connection: local
+  #   tasks:
+  #     - name: Template wireguard client file 
+  #       template:
+  #         src: ../templates/wireguard-client.j2
+  #         dest: "{{ wireguard_path }}/wg0.conf"
+  #         owner: root 
+  #         group: root
+  #         mode: '0644'
+  #     - name: Start wireguard tunnel
+  #       shell: wg-quick up wg0
+  #     - name: Enable wg systemd file 
+  #       systemd:
+  #         name: wg-quick@wg0
+  #         enabled: yes
+  #         state: started
