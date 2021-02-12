@@ -1,0 +1,22 @@
+---
+  - hosts: wireguard:instances
+    become: true
+    tasks:
+      - name: Update apt packages
+        apt: upgrade=yes update_cache=yes
+        when: ansible_facts['os_family'] == "Debian"
+      - name: Ensure basic system packages are installed
+        apt:
+          pkg:
+            - python3-pip
+            - python3-apt
+            - build-essential
+            - jq
+            - curl
+            - wget
+            - zsh
+            - resolvconf
+          state: present
+      - name: Reboot machine
+        reboot:
+          reboot_timeout: 120

@@ -1,0 +1,12 @@
+variable client_public_key {}
+variable client_private_key {}
+variable client_preshared_key {}
+variable instances {}
+variable encrypt_key {}
+variable acl_token {}
+variable region {}
+variable logdna_ingestion_key {}
+variable sysdig_key {}
+variable bastion {}
+variable subnets {}
+variable cse_addresses {}

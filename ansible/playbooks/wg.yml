@@ -1,0 +1,12 @@
+# playbook (with client config)
+- name: Configure wireguard mesh
+  hosts: wireguard
+  become: true
+  vars:
+    vpn_ip: 192.168.0.3
+    client_vpn_ip: 192.168.0.2
+    client_wireguard_path: "~/wg0.conf"
+    wireguard_port: 51280
+    wireguard_path: "/etc/wireguard"
+  roles:
+    - mawalu.wireguard_private_networking

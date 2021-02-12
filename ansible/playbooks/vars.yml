@@ -1,0 +1,9 @@
+encrypt_key: "5nL8+UdOCLws4WV4E39UhfT2KmAJfaLJCuQAVAYb/PM="
+region: "jp-osa"
+logdna_ingestion_key: "613b640c3c290be2cf232c489c966a1d"
+sysdig_key: "09aaba7f-3372-4e95-903f-693f1811d3d1"
+consul_servers: "{{ groups['instances'] }}"
+server_address: "163.68.90.248"
+
+      
+      

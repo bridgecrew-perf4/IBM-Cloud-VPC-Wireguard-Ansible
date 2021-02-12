@@ -1,0 +1,75 @@
+---
+  - hosts: local
+    connection: local
+    vars:
+      wireguard_path: "/etc/wireguard"
+    become: true
+    tasks:
+      - name: Install wireguard
+        apt:
+          pkg:
+            - wireguard
+            - resolvconf
+          state: present
+      - name: Set sysctl to forward IP traffic
+        blockinfile:
+          path: /etc/sysctl.conf
+          block: |
+            net.ipv4.ip_forward=1
+      - name: Generate wireguard keys
+  	shell: set -o pipefail && \
+               umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+  	args:
+    	       executable: /bin/bash
+
+
+
+  - hosts: wireguard
+    become: true
+    tasks:
+      - name: Install wireguard
+        apt:
+          pkg:
+            - wireguard
+            - resolvconf
+          state: present
+      - name: Set sysctl to forward IP traffic
+        blockinfile:
+          path: /etc/sysctl.conf
+          block: |
+            net.ipv4.ip_forward=1
+      - name: Generate wireguard client private key 
+        shell: /usr/bin/wg genkey | tee -a /tmp/privatekey
+        register: server_private_key
+      - name: Generate wireguard client public key 
+        shell: /usr/bin/wg pubkey | tee -a /tmp/publickey
+        register: server_public_key
+      - name: Generate wireguard preshared key 
+        shell: /usr/bin/wg genpsk | tee /tmp/presharedkey
+        register: server_preshared_key
+      - name: Template wireguard configuration file 
+        template:
+          src: ../templates/wireguard-conf.j2
+          dest: /etc/wireguard/wg0.conf
+      - name: Start wireguard tunnel
+        shell: wg-quick up wg0
+      - name: Enable wg systemd file 
+        systemd:
+          name: wg-quick@wg0
+          enabled: yes
+          state: started
+  - hosts: local
+    become: true
+    connection: local
+    tasks:
+      - name: Template wireguard client file 
+        template:
+          src: ../templates/wireguard-client.j2
+          dest: /etc/wireguard/wg0.conf
+      - name: Start wireguard tunnel
+        shell: wg-quick up wg0
+      - name: Enable wg systemd file 
+        systemd:
+          name: wg-quick@wg0
+          enabled: yes
+          state: started

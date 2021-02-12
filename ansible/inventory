@@ -1,0 +1,16 @@
+[bastion]
+wireguard ansible_host=163.68.90.248 ansible_user=ryan
+
+[instances]
+rtlab-jp-osa-consul1 ansible_host=10.248.0.132 ansible_user=ryan
+rtlab-jp-osa-consul2 ansible_host=10.248.64.4 ansible_user=ryan
+rtlab-jp-osa-consul3 ansible_host=10.248.128.132 ansible_user=ryan
+
+[instances:vars]
+ansible_ssh_extra_args=' -o "StrictHostKeyChecking=no" -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p ryan@163.68.90.248"'
+
+[local]
+localhost   ansible_connection=local
+
+[local:vars]
+ansible_become_password='JaduB4aw21@#'
