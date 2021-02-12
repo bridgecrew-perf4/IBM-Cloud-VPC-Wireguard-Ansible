@@ -4,7 +4,7 @@ SaveConfig = true
 PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
 PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o ens3 -j MASQUERADE
 ListenPort = 51820
-PrivateKey = SERVER_PRIVATE_KEY
+PrivateKey = {{ server_public_key }}
 DNS = 1.1.1.1
 
 [Peer]

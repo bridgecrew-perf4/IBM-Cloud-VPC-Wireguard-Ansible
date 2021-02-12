@@ -1,11 +1,10 @@
 ---
-  - hosts: local
-    connection: local
+  - hosts: local:wireguard
     vars:
       wireguard_path: "/etc/wireguard"
     become: true
     tasks:
-      - name: Install wireguard
+      - name: Install wireguard 
         apt:
           pkg:
             - wireguard
@@ -16,65 +15,47 @@
           path: /etc/sysctl.conf
           block: |
             net.ipv4.ip_forward=1
-      - name: Generate wireguard keys
+      - name: Generate local wireguard keys
         shell: umask 077; wg genkey | tee {{ wireguard_path }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
+        delegate_to: local
       - name: Generate wireguard preshared key
         shell: wg genpsk | tee {{ wireguard_path }}/presharedkey
+        register: client_preshared_key
+        delegate_to: local
       - name: Read client private key
         slurp:
           src: "{{ wireguard_path }}/privatekey"
         register: client_private_key
+        delegate_to: local
       - name: Read client public key
         slurp:
           src: "{{ wireguard_path }}/publickey"
         register: client_public_key
-      - name: Template server config 
-        template:
-          src: ../templates/wireguard-conf.j2
-          dest: ../templates/wireguard-conf-updated.j2
         delegate_to: local
-  - hosts: wireguard
-    become: true
-    vars_file:
-      - vars.yml
-    tasks:
-      - name: Install wireguard
-        apt:
-          pkg:
-            - wireguard
-            - resolvconf
-          state: present
-      - name: Set sysctl to forward IP traffic
-        blockinfile:
-          path: /etc/sysctl.conf
-          block: |
-            net.ipv4.ip_forward=1
-      - name: Generate wireguard keys
-        shell: umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+      - name: Generate server wireguard keys
+        shell: umask 077; wg genkey | tee {{ wireguard_path }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
+        delegate_to: wireguard
+      - name: Generate wireguard preshared key
+        shell: wg genpsk | tee {{ wireguard_path }}/presharedkey
+        register: server_preshared_key
+        delegate_to: wireguard
       - name: Read server private key
         slurp:
           src: "{{ wireguard_path }}/privatekey"
         register: server_private_key
-      - name: Read server public key
+        delegate_to: wireguard
+      - name: Read client public key
         slurp:
           src: "{{ wireguard_path }}/publickey"
         register: server_public_key
-      - name: Template wireguard configuration file 
+      - name: Template server config 
         template:
-          src: ../templates/wireguard-conf-updated.j2
+          src: ../templates/wireguard-conf.j2
           dest: "{{ wireguard_path }}/wg0.conf"
-          owner: root 
-          group: root
-          mode: '0644'
-      - name: Start wireguard tunnel
-        shell: wg-quick up wg0
-      - name: Enable wg systemd file 
-        systemd:
-          name: wg-quick@wg0
-          enabled: yes
-          state: started
+        delegate_to: wireguard
+ 
   # - hosts: local
   #   become: true
   #   vars:
