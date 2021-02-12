@@ -17,13 +17,19 @@
           block: |
             net.ipv4.ip_forward=1
       - name: Generate wireguard keys
-  	shell: set -o pipefail && \
+  	    shell: set -o pipefail && \
                umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
-  	args:
-    	       executable: /bin/bash
-
-
-
+  	    args:
+    	    executable: /bin/bash
+        run_once: true
+      - name: Read client private key
+        slurp:
+          src: "{{ wireguard_path }}/privatekey"
+        register: client_private_key
+      - name: Read client public key
+        slurp:
+          src: "{{ wireguard_path }}/publickey"
+        register: client_public_key
   - hosts: wireguard
     become: true
     tasks:
@@ -38,15 +44,20 @@
           path: /etc/sysctl.conf
           block: |
             net.ipv4.ip_forward=1
-      - name: Generate wireguard client private key 
-        shell: /usr/bin/wg genkey | tee -a /tmp/privatekey
+      - name: Generate wireguard keys
+  	    shell: set -o pipefail && \
+               umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+  	    args:
+    	    executable: /bin/bash
+        run_once: true
+      - name: Read server private key
+        slurp:
+          src: "{{ wireguard_path }}/privatekey"
         register: server_private_key
-      - name: Generate wireguard client public key 
-        shell: /usr/bin/wg pubkey | tee -a /tmp/publickey
+      - name: Read server public key
+        slurp:
+          src: "{{ wireguard_path }}/publickey"
         register: server_public_key
-      - name: Generate wireguard preshared key 
-        shell: /usr/bin/wg genpsk | tee /tmp/presharedkey
-        register: server_preshared_key
       - name: Template wireguard configuration file 
         template:
           src: ../templates/wireguard-conf.j2
