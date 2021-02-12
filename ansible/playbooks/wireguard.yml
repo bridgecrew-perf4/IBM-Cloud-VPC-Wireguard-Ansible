@@ -17,10 +17,7 @@
           block: |
             net.ipv4.ip_forward=1
       - name: Generate wireguard keys
-  	    shell: set -o pipefail && \
-               umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
-  	    args:
-    	    executable: /bin/bash
+        shell: set -o pipefail && umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
       - name: Read client private key
         slurp:
@@ -32,6 +29,8 @@
         register: client_public_key
   - hosts: wireguard
     become: true
+    vars:
+      wireguard_path: "/etc/wireguard"
     tasks:
       - name: Install wireguard
         apt:
@@ -45,10 +44,7 @@
           block: |
             net.ipv4.ip_forward=1
       - name: Generate wireguard keys
-  	    shell: set -o pipefail && \
-               umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
-  	    args:
-    	    executable: /bin/bash
+        shell: set -o pipefail && umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
       - name: Read server private key
         slurp:
@@ -62,6 +58,9 @@
         template:
           src: ../templates/wireguard-conf.j2
           dest: /etc/wireguard/wg0.conf
+          owner: root 
+          group: root
+          mode: '0644'
       - name: Start wireguard tunnel
         shell: wg-quick up wg0
       - name: Enable wg systemd file 
@@ -71,12 +70,17 @@
           state: started
   - hosts: local
     become: true
+    vars:
+      wireguard_path: "/etc/wireguard"
     connection: local
     tasks:
       - name: Template wireguard client file 
         template:
           src: ../templates/wireguard-client.j2
-          dest: /etc/wireguard/wg0.conf
+          dest: {{ wireguard_path }}/wg0.conf
+          owner: root 
+          group: root
+          mode: '0644'
       - name: Start wireguard tunnel
         shell: wg-quick up wg0
       - name: Enable wg systemd file 
