@@ -17,7 +17,7 @@
           block: |
             net.ipv4.ip_forward=1
       - name: Generate wireguard keys
-        shell: set -o pipefail && umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+        shell: umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
       - name: Read client private key
         slurp:
@@ -44,7 +44,7 @@
           block: |
             net.ipv4.ip_forward=1
       - name: Generate wireguard keys
-        shell: set -o pipefail && umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+        shell: umask 077; wg genkey | tee {{ wireguard_path  }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
         run_once: true
       - name: Read server private key
         slurp:
@@ -57,7 +57,7 @@
       - name: Template wireguard configuration file 
         template:
           src: ../templates/wireguard-conf.j2
-          dest: /etc/wireguard/wg0.conf
+          dest: "{{ wireguard_path }}/wg0.conf"
           owner: root 
           group: root
           mode: '0644'
@@ -77,7 +77,7 @@
       - name: Template wireguard client file 
         template:
           src: ../templates/wireguard-client.j2
-          dest: {{ wireguard_path }}/wg0.conf
+          dest: "{{ wireguard_path }}/wg0.conf"
           owner: root 
           group: root
           mode: '0644'
