@@ -1,13 +1,5 @@
 [bastion]
-bastion ansible_host=${bastion} ansible_user=ryan
-
-[instances]
-%{ for instanceIndex, instance in instances ~}
-${instance.name} ansible_host=${instance.primary_network_interface.0.primary_ipv4_address} ansible_user=ryan
-%{ endfor ~}
-
-[instances:vars]
-ansible_ssh_extra_args=' -o "StrictHostKeyChecking=no" -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p ryan@${bastion}"'
+wireguard ansible_host=${bastion} ansible_user=ryan
 
 [local]
 localhost   ansible_connection=local

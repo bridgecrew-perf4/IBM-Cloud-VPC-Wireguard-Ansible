@@ -1,9 +1,14 @@
 # Local .terraform directories
 **/.terraform/*
+.terraform.lock.hcl 
 
 # .tfstate files
 *.tfstate
 *.tfstate.*
+
+**/ansible/inventory
+**/ansible/templates/wireguard-client.j2
+**/ansible/playbooks/var.yml
 
 # Crash log files
 crash.log

@@ -1,7 +1,7 @@
 variable "region" {
   type        = string
   description = "The region where the VPC resources will be deployed."
-  default     = "jp-osa"
+  default     = "us-south"
 }
 
 variable "resource_group" {
@@ -10,18 +10,21 @@ variable "resource_group" {
   default     = "CDE"
 }
 
-variable remote_addresses {
+variable "remote_addresses" {
   default = ["172.104.198.57", "76.31.10.241"]
 }
 
-variable tags {
+variable "tags" {
   default = ["owner:ryantiffany"]
 }
 
-variable client_preshared_key {}
-variable client_private_key {}
-variable client_public_key {}
-variable encrypt_key {}
-variable acl_token {}
-variable logdna_ingestion_key {}
-variable sysdig_key {}
+variable "existing_vpc" {}
+
+variable "existing_subnet_id" {}
+variable "name" {}
+variable "ssh_key" {}
+variable "allow_ssh_from" {}
+variable "create_public_ip" {
+  type    = bool
+  default = true
+}
