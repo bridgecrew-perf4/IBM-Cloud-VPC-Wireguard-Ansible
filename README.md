@@ -9,7 +9,7 @@ This repository will allow you to deploy a Wireguard VPN server in to a new or e
    cp terraform.tfvars.example terraform.tfvars
    ```
 
-1. Edit `terraform.tfvars` to match your environment. See [#inputs] for available options.
+1. Edit `terraform.tfvars` to match your environment. See [inputs](#inputs) for available options.
 1. Plan deployment:
 
    ```sh
