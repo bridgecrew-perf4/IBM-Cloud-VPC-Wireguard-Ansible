@@ -1,0 +1,5 @@
+region             = ""
+existing_subnet_id = ""
+existing_vpc       = ""
+name               = ""
+ssh_key            = ""
