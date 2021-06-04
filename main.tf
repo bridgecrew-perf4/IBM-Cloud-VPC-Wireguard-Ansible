@@ -46,13 +46,6 @@ module "subnet" {
   public_gateway = element(module.gateway[*].id, count.index)
 }
 
-module "security" {
-  source         = "./security"
-  name           = local.name
-  resource_group = data.ibm_resource_group.group.id
-  vpc            = local.vpc.id
-}
-
 locals {
   subnets = var.existing_vpc != "" ? [
     for subnet in data.ibm_is_subnets.existing_subnets.0.subnets :
@@ -74,11 +67,20 @@ module "wireguard" {
   init_script       = file("${path.module}/install.yml")
 }
 
+resource "ibm_is_security_group_rule" "wg_udp" {
+  group     = module.wireguard.bastion_security_group_id
+  direction = "inbound"
+  remote    = "0.0.0.0/0"
+  udp {
+    port_min = 51280
+    port_max = 51280
+  }
+}
 
 module "ansible" {
   source        = "./ansible"
   bastion       = module.wireguard.bastion_public_ip
   region        = var.region
   cse_addresses = join(", ", flatten(local.vpc.cse_source_addresses[*].address))
-  subnets       = join(", ", [format("%s0.0/18", substr(local.subnets[0].ipv4_cidr_block, 0, 7))])
+  subnets       = local.subnets.ipv4_cidr_block
 }
