@@ -15,16 +15,19 @@ variable "tags" {
 variable "existing_vpc" {
   type        = string
   description = "(Optional) Name of an existing VPC where resources will be deployed. If none provided a new VPC will be created."
+  default     = ""
 }
 
 variable "existing_subnet_id" {
   type        = string
   description = "(Optional) ID of an existing VPC Subnet where resources will be deployed. To use this `existing_vpc` must be set too. If none provided a new Subnet will be created."
+  default     = ""
 }
 
 variable "name" {
   type        = string
   description = "(Optional) Name to prepend to all deployed resources. If none provided it default to `wg`."
+  default     = ""
 }
 
 variable "ssh_key" {
