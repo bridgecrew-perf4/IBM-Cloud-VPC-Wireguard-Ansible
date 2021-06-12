@@ -23,12 +23,6 @@ jobs:
         with:
           terraform_version: 0.14.11
       -
-        name: Install pre-commit
-        run: pip install pre-commit
-      -
-        name: Run pre-commit command
-        run: pre-commit run -a
-      -
         name: terraform init                # initialize a working directory containing Terraform configuration files.
         run: find . -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && echo "$m - init" && terraform init -input=false -backend=false) || exit 1; done
       -
