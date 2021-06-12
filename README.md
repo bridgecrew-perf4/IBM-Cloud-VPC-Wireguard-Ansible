@@ -1,6 +1,14 @@
 # IBM Cloud VPC Wireguard Instance
 This repository will allow you to deploy a Wireguard VPN server in to a new or existing IBM Cloud VPC. 
 
+
+### Generate Client Keys
+
+```
+wg genkey | tee client-keys/privatekey | wg pubkey > client-keys/publickey
+
+```
+
 ## Deploy all resources
 
 1. Copy `terraform.tfvars.example` to `terraform.tfvars`:
@@ -32,3 +40,4 @@ This repository will allow you to deploy a Wireguard VPN server in to a new or e
 | existing\_subnet\_id | ID of an existing VPC Subnet where resources will be deployed. To use this `existing_vpc` must be set too. If none provided a new Subnet will be created. | `string` | `""` | no |
 | ssh\_key | Name of an existing VPC ssh key for the region. If not provided a new key will be generated and attached to the VPC. | `string` | `""` | no |
 | name | Name that will be prepended to all deployed resources. | `string` | `"wg"` | no |
+

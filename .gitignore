@@ -6,6 +6,8 @@
 *.tfstate
 *.tfstate.*
 
+**/client-keys/*
+
 **/ansible/inventory
 **/ansible/templates/wireguard-client.j2
 **/ansible/playbooks/var.yml

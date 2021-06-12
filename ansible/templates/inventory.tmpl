@@ -1,5 +1,5 @@
-[wireguard]
-wg ansible_host=${bastion} ansible_user=root
+[instance]
+wireguard ansible_host=${bastion} ansible_user=root
 
-[local]
-localhost   ansible_connection=local
+[control]
+local ansible_connection=local

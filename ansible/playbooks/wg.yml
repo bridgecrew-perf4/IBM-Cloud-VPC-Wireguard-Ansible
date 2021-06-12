@@ -1,12 +1,76 @@
-# playbook (with client config)
-- name: Configure wireguard mesh
-  hosts: wireguard
-  become: true
-  vars:
-    vpn_ip: 192.168.0.3
-    client_vpn_ip: 192.168.0.2
-    client_wireguard_path: "~/wg0.conf"
-    wireguard_port: 51280
-    wireguard_path: "/etc/wireguard"
-  roles:
-    - mawalu.wireguard_private_networking
+---
+  - hosts: local
+    connection: local
+    gather_facts: true
+    vars:
+      local_wireguard_path: "/Users/ryan/Desktop"
+    tasks:
+      - name: Generate client wireguard keys
+        shell: umask 077; wg genkey | tee {{ local_wireguard_path }}/privatekey | wg pubkey > {{ local_wireguard_path }}/publickey
+        run_once: true
+      - name: Generate client preshared key
+        shell: wg genpsk | tee {{ local_wireguard_path }}/presharedkey
+        run_once: true
+      - name: Read client preshared key
+        slurp:
+          src: "{{ local_wireguard_path }}/presharedkey"
+        register: client_preshared_key
+      - name: Read client private key
+        slurp:
+          src: "{{ local_wireguard_path }}/privatekey"
+        register: client_private_key
+      - name: Read client public key
+        slurp:
+          src: "{{ local_wireguard_path }}/publickey"
+        register: client_public_key
+  - hosts: wireguard
+    gather_facts: true
+    vars:
+      wireguard_path: "/etc/wireguard"
+    tasks:
+      - name: Install wireguard
+        apt:
+          name: wireguard
+      - name: Set sysctl to forward IP traffic
+        blockinfile:
+          path: /etc/sysctl.conf
+          block: |
+            net.ipv4.ip_forward=1
+      - name: Generate server wireguard keys
+        shell: umask 077; wg genkey | tee {{ server_wireguard_path }}/privatekey | wg pubkey > {{ server_wireguard_path }}/publickey
+        run_once: true
+      - name: Generate server preshared key
+        shell: wg genpsk | tee {{ server_wireguard_path }}/presharedkey
+        run_once: true
+      - name: Read server preshared key
+        slurp:
+          src: "{{ server_wireguard_path }}/presharedkey"
+        register: server_preshared_key
+      - name: Read server private key
+        slurp:
+          src: "{{ server_wireguard_path }}/privatekey"
+        register: server_private_key
+      - name: Read server public key
+        slurp:
+          src: "{{ server_wireguard_path }}/publickey"
+        register: server_public_key
+      - name: Generate wireguard configuration file
+        template:
+          src: ../templates/wireguard-server.j2
+          dest: "{{ server_wireguard_path }}/wg0.conf"
+      - name: Enable wireguard tunnel at boot 
+        systemd:
+          name: wg-quick@wg0
+          enabled: yes
+      - name: Reboot to ensure WG has the latest kernel
+        reboot:
+  - hosts: local
+    connection: local
+    gather_facts: false
+    vars:
+      local_wireguard_path: "/Users/ryan/Desktop"
+    tasks:
+      - name: Generate client wireguard configuration
+        template:
+          src: ../templates/wireguard-client.j2
+          dest: "{{ local_wireguard_path }}/wg0.conf"

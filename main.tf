@@ -11,9 +11,11 @@ resource "ibm_is_ssh_key" "generated_key" {
 }
 
 locals {
-  name        = var.name != "" ? var.name : "wgrt"
+  name        = var.name != "" ? var.name : "wg"
   ssh_key_ids = var.ssh_key != "" ? [data.ibm_is_ssh_key.deploymentKey.id, ibm_is_ssh_key.generated_key.id] : [ibm_is_ssh_key.generated_key.id]
   vpc         = var.existing_vpc != "" ? data.ibm_is_vpc.existing.0 : module.vpc.0.vpc
+  zone        = var.zone != "" ? "${var.region}-${var.zone}" : "${var.region}-1"
+  gateway     = var.existing_subnet_id != "" ? module.gateway.id : null
 }
 
 module "vpc" {
@@ -24,15 +26,14 @@ module "vpc" {
   tags           = concat(var.tags, ["region:${var.region}", "vpc:${local.name}-vpc"])
 }
 
-
 module "gateway" {
   count          = var.existing_subnet_id != "" ? 0 : 1
   source         = "git::https://github.com/cloud-design-dev/IBM-Cloud-VPC-Public-Gateway-Module.git"
   name           = "${local.name}-${element(data.ibm_is_zones.mzr.zones[*], count.index)}-pgw"
-  zone           = data.ibm_is_zones.mzr.zones[0]
+  zone           = local.zone
   vpc            = local.vpc.id
   resource_group = data.ibm_resource_group.group.id
-  tags           = concat(var.tags, ["zone:${data.ibm_is_zones.mzr.zones[0]}", "region:${var.region}", "vpc:${local.name}-vpc", "provider:ibmcloud"])
+  tags           = concat(var.tags, ["zone:${local.zone}", "region:${var.region}", "vpc:${local.name}-vpc"])
 }
 
 module "subnet" {
@@ -42,15 +43,16 @@ module "subnet" {
   resource_group = data.ibm_resource_group.group.id
   address_count  = "32"
   vpc            = local.vpc.id
-  zone           = data.ibm_is_zones.mzr.zones[0]
-  public_gateway = element(module.gateway[*].id, count.index)
+  zone           = local.zone
+  public_gateway = local.gateway
+  tags           = concat(var.tags, ["zone:${local.zone}", "region:${var.region}", "vpc:${local.name}-vpc"])
 }
 
 locals {
   subnets = var.existing_vpc != "" ? [
     for subnet in data.ibm_is_subnets.existing_subnets.0.subnets :
     subnet if subnet.vpc == data.ibm_is_vpc.existing.0.id
-  ] : module.vpc.0.subnets
+  ] : module.subnet
   bastion_subnet_id = var.existing_subnet_id != "" ? data.ibm_is_subnet.existing_subnet.0.id : local.subnets.0.id
 }
 
@@ -64,6 +66,7 @@ module "wireguard" {
   ssh_key_ids       = local.ssh_key_ids
   allow_ssh_from    = var.allow_ssh_from
   create_public_ip  = var.create_public_ip
+  image_name        = "ibm-ubuntu-20-04-minimal-amd64-2"
   init_script       = file("${path.module}/install.yml")
 }
 
@@ -82,5 +85,5 @@ module "ansible" {
   bastion       = module.wireguard.bastion_public_ip
   region        = var.region
   cse_addresses = join(", ", flatten(local.vpc.cse_source_addresses[*].address))
-  subnets       = local.subnets.ipv4_cidr_block
+  subnets       = local.subnets
 }
