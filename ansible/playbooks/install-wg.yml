@@ -1,15 +1,13 @@
 ---
-  - hosts: wireguard:instances
-    become: true
+  - hosts: wireguard
     tasks:
       - name: Update apt packages
         apt: upgrade=yes update_cache=yes
         when: ansible_facts['os_family'] == "Debian"
-      - name: Ensure basic system packages are installed
+      - name: Ensure wireguard and basic system packages are installed
         apt:
           pkg:
-            - python3-pip
-            - python3-apt
+            - wireguard
             - build-essential
             - jq
             - curl
@@ -17,6 +15,11 @@
             - zsh
             - resolvconf
           state: present
+      - name: Set sysctl to forward IP traffic
+        blockinfile:
+          path: /etc/sysctl.conf
+          block: |
+            net.ipv4.ip_forward=1
       - name: Reboot machine
         reboot:
           reboot_timeout: 120

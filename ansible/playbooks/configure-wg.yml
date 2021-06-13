@@ -1,0 +1,47 @@
+---
+  - hosts: wireguard
+    vars:
+      wireguard_path: "/etc/wireguard"
+    tasks:
+      - name: Install wireguard 
+        apt:
+          pkg:
+            - wireguard
+            - resolvconf
+          state: present
+      - name: Set sysctl to forward IP traffic
+        blockinfile:
+          path: /etc/sysctl.conf
+          block: |
+            net.ipv4.ip_forward=1
+
+
+
+
+
+      - name: Generate server wireguard keys
+        shell: umask 077; wg genkey | tee {{ wireguard_path }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
+        run_once: true
+      - name: Generate wireguard preshared key
+        shell: wg genpsk | tee {{ wireguard_path }}/presharedkey
+        register: server_preshared_key
+      - name: Read server private key
+        slurp:
+          src: "{{ wireguard_path }}/privatekey"
+        register: server_private_key
+      - name: Read client public key
+        slurp:
+          src: "{{ wireguard_path }}/publickey"
+        register: server_public_key
+        delegate_to: wireguard
+      - name: Template server config 
+        template:
+          src: ../templates/wireguard-conf.j2
+          dest: "{{ wireguard_path }}/wg0.conf"
+      - name: Start wireguard tunnel
+        shell: wg-quick up wg0
+      - name: Enable wg systemd file 
+        systemd:
+          name: wg-quick@wg0
+          enabled: yes
+          state: started

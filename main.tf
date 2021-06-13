@@ -15,7 +15,7 @@ locals {
   ssh_key_ids = var.ssh_key != "" ? [data.ibm_is_ssh_key.deploymentKey.id, ibm_is_ssh_key.generated_key.id] : [ibm_is_ssh_key.generated_key.id]
   vpc         = var.existing_vpc != "" ? data.ibm_is_vpc.existing.0 : module.vpc.0.vpc
   zone        = var.zone != "" ? "${var.region}-${var.zone}" : "${var.region}-1"
-  gateway     = var.existing_subnet_id != "" ? module.gateway.id : null
+  gateway     = var.existing_subnet_id != "" ? null : module.gateway.0.id
 }
 
 module "vpc" {
@@ -81,9 +81,12 @@ resource "ibm_is_security_group_rule" "wg_udp" {
 }
 
 module "ansible" {
-  source        = "./ansible"
-  bastion       = module.wireguard.bastion_public_ip
-  region        = var.region
-  cse_addresses = join(", ", flatten(local.vpc.cse_source_addresses[*].address))
-  subnets       = local.subnets
+  source               = "./ansible"
+  bastion              = module.wireguard.bastion_public_ip
+  region               = var.region
+  cse_addresses        = join(", ", flatten(local.vpc.cse_source_addresses[*].address))
+  subnets              = local.subnets
+  client_private_key   = var.client_private_key
+  client_public_key    = var.client_public_key
+  client_preshared_key = var.client_preshared_key
 }

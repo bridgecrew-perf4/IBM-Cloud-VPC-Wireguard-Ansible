@@ -27,7 +27,7 @@ variable "existing_subnet_id" {
 variable "name" {
   type        = string
   description = "(Optional) Name to prepend to all deployed resources. If none provided it default to `wg`."
-  default     = ""
+  default     = "wg"
 }
 
 variable "ssh_key" {
@@ -49,4 +49,19 @@ variable "create_public_ip" {
 variable "zone" {
   type        = string
   description = "VPC zone where Wireguard instance is deployed. If using an existing Subnet make sure you target the correct zone. Options are 1,2, or 3 and correspond to `var.region-N` (us-south- for example). "
+}
+
+variable "client_public_key" {
+  type        = string
+  description = "Wireguard local client Public Key"
+}
+
+variable "client_preshared_key" {
+  type        = string
+  description = "Wireguard local client Preshared Key."
+}
+
+variable "client_private_key" {
+  type        = string
+  description = "Wireguard local client private key"
 }
