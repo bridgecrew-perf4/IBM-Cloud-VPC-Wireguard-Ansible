@@ -33,5 +33,5 @@ jobs:
         run: terraform fmt -list=true -write=false -check -recursive
       - 
         name: terraform plan check
-        run: terraform plan -var="ibmcloud_api_key=${{ secrets.IBMCLOUD_API_KEY }}" -var="region=jp-osa" -var="allow_ssh_from=98.40.239.8" -var="zone=jp-osa-1" -var="existing_resource_group=CDE" -var="name=newlab" -var="ssh_key=hyperion-jp-osa" -out default.tfplan
+        run: terraform plan -var="ibmcloud_api_key=${{ secrets.IBMCLOUD_API_KEY }}" -var="region=jp-osa" -var="allow_ssh_from=98.40.239.8" -var="zone=jp-osa-1" -var="resource_group=CDE" -var="name=newlab" -var="ssh_key=hyperion-jp-osa" -out default.tfplan
 
