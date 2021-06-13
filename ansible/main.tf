@@ -1,7 +1,8 @@
 resource "local_file" "ansible-inventory" {
   content = templatefile("${path.module}/templates/inventory.tmpl",
     {
-      bastion = var.bastion
+      bastion            = var.bastion
+      wireguard_instance = var.wireguard_instance.primary_ipv4_address
     }
   )
   filename = "${path.module}/inventory"

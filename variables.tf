@@ -65,3 +65,9 @@ variable "client_private_key" {
   type        = string
   description = "Wireguard local client private key"
 }
+
+variable "existing_bastion_instance" {
+  type        = string
+  description = "Name of an existing bastion instance"
+  default     = ""
+}

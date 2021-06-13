@@ -32,3 +32,8 @@ data "ibm_is_subnet" "existing_subnet" {
   count      = var.existing_subnet_id != "" ? 1 : 0
   identifier = var.existing_subnet_id
 }
+
+data "ibm_is_instance" "existing_bastion" {
+  count = var.existing_bastion_instance != "" ? 1 : 0
+  name  = var.existing_bastion_instance
+}

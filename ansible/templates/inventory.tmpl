@@ -1,5 +1,8 @@
-[instance]
-wireguard ansible_host=${bastion} ansible_user=root
+[bastion]
+bastion ansible_host=${bastion} ansible_user=root
+
+[wireguard]
+${wireguard_instance.name} ansible_host=${wireguard_instance.primary_network_interface.0.primary_ipv4_address} ansible_user=root
 
 [control]
 local ansible_connection=local
