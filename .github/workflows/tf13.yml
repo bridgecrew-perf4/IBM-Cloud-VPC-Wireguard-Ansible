@@ -33,4 +33,4 @@ jobs:
         run: terraform fmt -list=true -write=false -check -recursive
       - 
         name: terraform plan check
-        run: terraform plan -var="ibmcloud_api_key=${{ secrets.IBMCLOUD_API_KEY }}" -var="client_preshared_key=${{ secrets.CLIENT_PRESHARED_KEY }}" -var="client_public_key=${{ secrets.CLIENT_PUBLIC_KEY }}" -var="region=us-south" -var="allow_ssh_from=98.40.239.8" -var="existing_resource_group=CDE" -var="name=rtv1" -var="existing_ssh_key=hyperion-us-south" -out default.tfplan
+        run: terraform plan -var="ibmcloud_api_key=${{ secrets.IBMCLOUD_API_KEY }}" -var="client_private_key=${{ secrets. }}" -var="client_preshared_key=${{ secrets.CLIENT_PRESHARED_KEY }}" -var="client_public_key=${{ secrets.CLIENT_PUBLIC_KEY }}" -var="region=us-south" -var="allow_ssh_from=98.40.239.8" -var="existing_resource_group=CDE" -var="name=rtv1" -var="existing_ssh_key=hyperion-us-south" -out default.tfplan
