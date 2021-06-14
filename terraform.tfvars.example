@@ -10,8 +10,8 @@ ibmcloud_api_key = ""
 # Allow SSH from. An IP, CIDR block, or VPC Security group that is allowed to connect to our bastion instance via SSH
 allow_ssh_from = ""
 
-# Name of an existing SSH key to add to compute instances. 
-ssh_key = ""
+# (optional) Name of an existing SSH key to add to compute instances. 
+existing_ssh_key = ""
 
 # Name to prepend to resources
 name = ""
@@ -19,11 +19,13 @@ name = ""
 # Identifier for person that created the consul cluster and associated resources. 
 owner = ""
 
-# (Optional) The name of an existing Subnet to use for deployed resources. If none provided, one will be created for you. If you use an existing Subnet you must also set the `existing_vpc_name` variable.
+# The name of an existing Subnet where the (optional) bastion instance and wireguard instance will be deployed.
 existing_subnet_name = ""
 
-# (Optional) The name of an existing VPC to use for deployed resources. If none provided, one will be created for you. If you use an existing VPC you must also set the `existing_subnet_name` variable.
-existing_vpc_name
+# The name of an existing VPC where the (optional) bastion instance and wireguard instance will be deployed.
+existing_vpc_name = ""
+
+# 
 client_public_key = ""
 client_private_key = ""
 client_preshared_key = ""

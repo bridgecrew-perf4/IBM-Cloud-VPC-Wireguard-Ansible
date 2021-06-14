@@ -73,3 +73,9 @@ resource "ibm_is_security_group_rule" "private_dns_2" {
     port_max = 53
   }
 }
+
+resource "ibm_is_security_group_rule" "all_out" {
+  group     = ibm_is_security_group.wireguard_security_group.id
+  direction = "outbound"
+  remote    = "0.0.0.0/0"
+}

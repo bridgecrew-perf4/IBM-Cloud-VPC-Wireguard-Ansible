@@ -1,6 +1,6 @@
 variable "region" {}
 variable "bastion" {}
-variable "subnets" {}
+variable "subnet" {}
 variable "cse_addresses" {}
 variable "client_public_key" {}
 variable "client_preshared_key" {}

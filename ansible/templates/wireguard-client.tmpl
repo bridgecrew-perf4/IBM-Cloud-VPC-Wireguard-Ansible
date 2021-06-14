@@ -6,7 +6,7 @@ Address = 192.168.0.3/24
 PublicKey = {{ server_public_key }}
 PresharedKey = {{ server_preshared_key }}
 Endpoint = ${bastion}:51820
-AllowedIPs = 166.8.0.0/14, 192.168.0.0/28, %{ for subnetIndex, subnet in subnets ~} ${subnet.ipv4_cidr_block}, %{ endfor ~} ${cse_addresses}
+AllowedIPs = 166.8.0.0/14, 192.168.0.0/28, ${subnet}, ${cse_addresses}
 
 
 

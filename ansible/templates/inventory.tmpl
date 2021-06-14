@@ -1,8 +1,8 @@
-[bastion]
-bastion ansible_host=${bastion} ansible_user=root
+[vpn]
+wireguard ansible_host=${wireguard_instance} ansible_user=root
 
-[wireguard]
-${wireguard_instance.name} ansible_host=${wireguard_instance.primary_network_interface.0.primary_ipv4_address} ansible_user=root
+[vpn:vars]
+ansible_ssh_extra_args='-o "StrictHostKeyChecking=no" -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p root@${bastion}"'
 
 [control]
 local ansible_connection=local
