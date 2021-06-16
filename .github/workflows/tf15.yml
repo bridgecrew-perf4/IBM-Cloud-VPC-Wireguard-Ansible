@@ -27,7 +27,7 @@ jobs:
         name: setup terraform
         uses: hashicorp/setup-terraform@v1  # sets up Terraform CLI in your GitHub Actions workflow
         with:
-          terraform_version:  0.15.
+          terraform_version:  0.15.5
       -
         name: terraform init                # initialize a working directory containing Terraform configuration files.
         run: find . -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && echo "$m - init" && terraform init -input=false -backend=false) || exit 1; done
