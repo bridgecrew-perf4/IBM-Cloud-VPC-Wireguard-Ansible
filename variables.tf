@@ -14,7 +14,7 @@ variable "existing_resource_group" {
 }
 
 variable "tags" {
-  default = ["owner:ryantiffany"]
+  default = [""]
 }
 
 variable "existing_vpc_name" {
