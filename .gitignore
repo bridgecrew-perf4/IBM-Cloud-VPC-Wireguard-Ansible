@@ -10,7 +10,8 @@
 
 **/ansible/inventory
 **/ansible/templates/wireguard-client.j2
-**/ansible/playbooks/var.yml
+ansible/playbooks/vars.yml
+
 
 # Crash log files
 crash.log

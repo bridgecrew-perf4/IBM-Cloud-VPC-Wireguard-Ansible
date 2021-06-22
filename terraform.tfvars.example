@@ -16,17 +16,20 @@ existing_ssh_key = ""
 # Name to prepend to resources
 name = ""
 
-# Identifier for person that created the consul cluster and associated resources. 
-owner = ""
-
 # The name of an existing Subnet where the (optional) bastion instance and wireguard instance will be deployed.
 existing_subnet_name = ""
 
 # The name of an existing VPC where the (optional) bastion instance and wireguard instance will be deployed.
 existing_vpc_name = ""
 
-# 
+# Wireguard local client Public Key
 client_public_key = ""
+
+# Wireguard local client Private Key
 client_private_key = ""
+
+# Wireguard local client Preshared Key
 client_preshared_key = ""
+
+# Name of an existing Bastion instance to use with Ansible 
 existing_bastion_instance = ""
