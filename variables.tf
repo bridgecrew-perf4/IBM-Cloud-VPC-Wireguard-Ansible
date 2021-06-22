@@ -46,7 +46,7 @@ variable "allow_ssh_from" {
 
 variable "create_public_ip" {
   type        = bool
-  description = "Set whether to allocate a public IP address for the bastion instance"
+  description = "Set whether to allocate a public IP address for the bastion instance."
   default     = true
 }
 
@@ -71,7 +71,3 @@ variable "existing_bastion_instance" {
   default     = ""
 }
 
-variable "owner" {
-  type        = string
-  description = "Identifier that will be used in tagging resources."
-}

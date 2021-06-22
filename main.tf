@@ -9,7 +9,7 @@ resource "tls_private_key" "ssh" {
 }
 
 resource "ibm_is_ssh_key" "generated_key" {
-  name           = "${var.name}-${var.region}-key"
+  name           = "${var.name}-${var.region}-key2"
   public_key     = tls_private_key.ssh.public_key_openssh
   resource_group = local.resource_group
   tags           = concat(var.tags, ["region:${var.region}", "project:${var.name}", "owner:${var.owner}"])
@@ -50,11 +50,25 @@ module "wireguard" {
   vpc_id            = data.ibm_is_vpc.existing_vpc.id
   subnet_id         = data.ibm_is_subnet.existing_subnet.id
   ssh_keys          = local.ssh_key_ids
-  resource_group    = local.resource_group
+  resource_group_id = local.resource_group
   name              = "${var.name}-vpn"
   zone              = data.ibm_is_subnet.existing_subnet.zone
   allow_ip_spoofing = true
   security_groups   = [module.bastion.0.bastion_maintenance_group_id, module.security.wireguard_security_group]
+  tags              = concat(var.tags, ["region:${var.region}", "owner:${var.owner}", "zone:${data.ibm_is_subnet.existing_subnet.zone}", "project:${var.name}"])
+  user_data         = file("${path.module}/install.yml")
+}
+
+module "instance" {
+  source            = "git::https://github.com/cloud-design-dev/IBM-Cloud-VPC-Instance-Module.git"
+  vpc_id            = data.ibm_is_vpc.existing_vpc.id
+  subnet_id         = data.ibm_is_subnet.existing_subnet.id
+  ssh_keys          = local.ssh_key_ids
+  resource_group_id = local.resource_group
+  name              = "${var.name}-instance"
+  zone              = data.ibm_is_subnet.existing_subnet.zone
+  allow_ip_spoofing = true
+  security_groups   = [module.bastion.0.bastion_maintenance_group_id, module.security.internal_security_group]
   tags              = concat(var.tags, ["region:${var.region}", "owner:${var.owner}", "zone:${data.ibm_is_subnet.existing_subnet.zone}", "project:${var.name}"])
   user_data         = file("${path.module}/install.yml")
 }
