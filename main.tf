@@ -1,6 +1,9 @@
 locals {
-  ssh_key_ids    = var.existing_ssh_key != "" ? [data.ibm_is_ssh_key.existing_ssh_key.0.id, ibm_is_ssh_key.generated_key.id] : [ibm_is_ssh_key.generated_key.id]
-  resource_group = var.existing_resource_group != "" ? data.ibm_resource_group.group.0.id : ibm_resource_group.group.0.id
+  ssh_key_ids          = var.existing_ssh_key != "" ? [data.ibm_is_ssh_key.existing_ssh_key.0.id, ibm_is_ssh_key.generated_key.id] : [ibm_is_ssh_key.generated_key.id]
+  vpc_id               = var.existing_vpc != "" ? data.ibm_is_vpc.existing_vpc.0.id : ibm_is_vpc.new_vpc.0.id
+  resource_group       = var.existing_resource_group != "" ? data.ibm_resource_group.group.0.id : ibm_resource_group.group.0.id
+  frontend_subnet      = var.existing_subnet_name != "" ? data.ibm_is_subnet.existing_subnet.0.id : ibm_is_subnet.frontend_subnet.0.id
+  frontend_subnet_cidr = var.existing_subnet_name != "" ? data.ibm_is_subnet.existing_subnet.0.ipv4_cidr_block : ibm_is_subnet.frontend_subnet.0.ipv4_cidr_block
 }
 
 resource "tls_private_key" "ssh" {
@@ -9,7 +12,7 @@ resource "tls_private_key" "ssh" {
 }
 
 resource "ibm_is_ssh_key" "generated_key" {
-  name           = "${var.name}-${var.region}-key2"
+  name           = "${var.name}-${var.region}-key"
   public_key     = tls_private_key.ssh.public_key_openssh
   resource_group = local.resource_group
   tags           = concat(var.tags, ["region:${var.region}", "project:${var.name}", "owner:${var.owner}"])
@@ -21,82 +24,91 @@ resource "ibm_resource_group" "group" {
   tags  = concat(var.tags, ["project:${var.name}", "owner:${var.owner}"])
 }
 
-module "security" {
-  source                 = "./security"
-  name                   = var.name
-  vpc                    = data.ibm_is_vpc.existing_vpc.id
-  bastion_security_group = module.bastion.0.bastion_maintenance_group_id
-  resource_group         = local.resource_group
+resource "ibm_is_vpc" "new_vpc" {
+  count = var.existing_vpc != "" ? 0 : 1
+  name  = "${var.name}-vpc"
+  tags  = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
 }
 
-module "bastion" {
-  count             = var.existing_bastion_instance != "" ? 0 : 1
-  source            = "we-work-in-the-cloud/vpc-bastion/ibm"
-  version           = "0.0.7"
-  name              = "${var.name}-bastion"
-  resource_group_id = local.resource_group
-  vpc_id            = data.ibm_is_vpc.existing_vpc.id
-  subnet_id         = data.ibm_is_subnet.existing_subnet.id
-  ssh_key_ids       = local.ssh_key_ids
-  allow_ssh_from    = var.allow_ssh_from
-  create_public_ip  = var.create_public_ip
-  image_name        = "ibm-ubuntu-20-04-minimal-amd64-2"
-  init_script       = file("${path.module}/install.yml")
-  tags              = concat(var.tags, ["region:${var.region}", "owner:${var.owner}", "zone:${data.ibm_is_subnet.existing_subnet.zone}", "project:${var.name}"])
-}
-
-module "wireguard" {
-  source            = "git::https://github.com/cloud-design-dev/IBM-Cloud-VPC-Instance-Module.git"
-  vpc_id            = data.ibm_is_vpc.existing_vpc.id
-  subnet_id         = data.ibm_is_subnet.existing_subnet.id
-  ssh_keys          = local.ssh_key_ids
-  resource_group_id = local.resource_group
-  name              = "${var.name}-vpn"
-  zone              = data.ibm_is_subnet.existing_subnet.zone
-  allow_ip_spoofing = true
-  security_groups   = [module.bastion.0.bastion_maintenance_group_id, module.security.wireguard_security_group]
-  tags              = concat(var.tags, ["region:${var.region}", "owner:${var.owner}", "zone:${data.ibm_is_subnet.existing_subnet.zone}", "project:${var.name}"])
-  user_data         = file("${path.module}/install.yml")
-}
-
-module "instance" {
-  source            = "git::https://github.com/cloud-design-dev/IBM-Cloud-VPC-Instance-Module.git"
-  vpc_id            = data.ibm_is_vpc.existing_vpc.id
-  subnet_id         = data.ibm_is_subnet.existing_subnet.id
-  ssh_keys          = local.ssh_key_ids
-  resource_group_id = local.resource_group
-  name              = "${var.name}-instance"
-  zone              = data.ibm_is_subnet.existing_subnet.zone
-  allow_ip_spoofing = true
-  security_groups   = [module.bastion.0.bastion_maintenance_group_id, module.security.internal_security_group]
-  tags              = concat(var.tags, ["region:${var.region}", "owner:${var.owner}", "zone:${data.ibm_is_subnet.existing_subnet.zone}", "project:${var.name}"])
-  user_data         = file("${path.module}/install.yml")
-}
-
-resource "ibm_is_floating_ip" "wireguard" {
-  name           = "${var.name}-wireguard-address"
+resource "ibm_is_public_gateway" "frontend" {
+  name           = "${var.name}-frontend-pubgw"
+  vpc            = local.vpc_id
+  zone           = data.ibm_is_zones.mzr.zones[0]
   resource_group = local.resource_group
-  target         = module.wireguard.instance.primary_network_interface.0.id
-  tags           = concat(var.tags, ["region:${var.region}", "owner:${var.owner}", "zone:${data.ibm_is_subnet.existing_subnet.zone}", "project:${var.name}"])
+  tags           = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
 }
 
-# Add Wireguard main interface to bastion security group to the Ansible playbook will run 
-resource "ibm_is_security_group_network_interface_attachment" "under_maintenance" {
-  depends_on        = [module.wireguard]
-  network_interface = module.wireguard.instance.primary_network_interface.0.id
-  security_group    = module.bastion.0.bastion_maintenance_group_id
+resource "ibm_is_subnet" "frontend_subnet" {
+  count                    = var.existing_subnet_name != "" ? 0 : 1
+  name                     = "${var.name}-frontend-subnet"
+  vpc                      = local.vpc_id
+  zone                     = data.ibm_is_zones.mzr.zones[0]
+  total_ipv4_address_count = "16"
+  resource_group           = local.resource_group
+  public_gateway           = ibm_is_public_gateway.frontend.id
+  tags                     = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
+}
+
+resource "ibm_is_subnet" "backend_subnet" {
+  name                     = "${var.name}-backend-subnet"
+  vpc                      = local.vpc_id
+  zone                     = data.ibm_is_zones.mzr.zones[0]
+  total_ipv4_address_count = "64"
+  resource_group           = local.resource_group
+  tags                     = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
+}
+
+module "security" {
+  source            = "./security"
+  name              = var.name
+  vpc_id            = local.vpc_id
+  resource_group_id = local.resource_group
+  allow_ssh_from    = var.allow_ssh_from
+  allow_tunnel_from = var.allow_tunnel_from
+  tags              = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
+}
+
+module "wireguard_server" {
+  source            = "./instance"
+  vpc_id            = local.vpc_id
+  name              = "${var.name}-wg-server"
+  resource_group_id = local.resource_group
+  security_group    = [module.security.frontend_security_group]
+  subnet_id         = local.frontend_subnet
+  zone              = data.ibm_is_zones.mzr.zones[0]
+  ssh_keys          = local.ssh_key_ids
+  allow_ip_spoofing = true
+  tags              = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}", "zone:${data.ibm_is_zones.mzr.zones[0]}"])
+}
+
+resource "ibm_is_floating_ip" "wireguard_public" {
+  name           = "${var.name}-wg-public-ip"
+  target         = module.wireguard_server.primary_network_interface
+  resource_group = local.resource_group
+  tags           = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}", "zone:${data.ibm_is_zones.mzr.zones[0]}"])
+}
+
+module "podman_instance" {
+  source            = "./instance"
+  name              = "${var.name}-podman-instance"
+  vpc_id            = local.vpc_id
+  resource_group_id = local.resource_group
+  security_group    = [module.security.backend_security_group]
+  subnet_id         = ibm_is_subnet.backend_subnet.id
+  zone              = data.ibm_is_zones.mzr.zones[0]
+  ssh_keys          = local.ssh_key_ids
+  tags              = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}", "zone:${data.ibm_is_zones.mzr.zones[0]}"])
 }
 
 module "ansible" {
-  source               = "./ansible"
-  bastion              = module.bastion.0.bastion_public_ip
-  wireguard_instance   = module.wireguard.instance.primary_network_interface.0.primary_ipv4_address
-  region               = var.region
-  cse_addresses        = join(", ", flatten(data.ibm_is_vpc.existing_vpc.cse_source_addresses[*].address))
-  subnet               = data.ibm_is_subnet.existing_subnet.ipv4_cidr_block
-  client_private_key   = var.client_private_key
-  client_public_key    = var.client_public_key
-  client_preshared_key = var.client_preshared_key
+  source                  = "./ansible"
+  podman_instance         = module.podman_instance.private_ipv4_address
+  wireguard_instance      = ibm_is_floating_ip.wireguard_public.address
+  client_peer_allowed_ips = var.client_peer_allowed_ips
+  client_public_key       = var.client_public_key
+  local_ip                = var.local_ip
+  frontend_subnet_cidr    = local.frontend_subnet_cidr
+  backend_subnet_cidr     = ibm_is_subnet.backend_subnet.ipv4_cidr_block
 }
 
 

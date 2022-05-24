@@ -1,5 +1,6 @@
 ---
-  - hosts: wireguard
+  - name: Install Wireguard on server
+    hosts: all
     tasks:
       - name: Update apt packages
         apt: upgrade=yes update_cache=yes
@@ -8,11 +9,6 @@
         apt:
           pkg:
             - wireguard
-            - build-essential
-            - jq
-            - curl
-            - wget
-            - zsh
             - resolvconf
           state: present
       - name: Set sysctl to forward IP traffic

@@ -14,13 +14,14 @@ variable "existing_resource_group" {
 }
 
 variable "tags" {
-  default = [""]
+  type        = list(string)
+  description = "Tags that will be added to all resources that support them."
+  default     = []
 }
 
-variable "existing_vpc_name" {
+variable "existing_vpc" {
   type        = string
-  description = "Name of an existing VPC where wireguard instance will be deployed."
-  default     = ""
+  description = "(Optional) Name of an existing VPC where wireguard instance will be deployed. If none provided a new one will be created."
 }
 
 variable "existing_subnet_name" {
@@ -35,7 +36,7 @@ variable "name" {
 
 variable "existing_ssh_key" {
   type        = string
-  description = "(Optional) Name of an existing VPC ssh key for the region. If not provided a new key will be generated and attached to the Wireguard instance."
+  description = "(Optional) Name of an existing VPC ssh key for the region. If none provided a new one will be created."
 }
 
 variable "allow_ssh_from" {
@@ -44,10 +45,10 @@ variable "allow_ssh_from" {
   default     = "0.0.0.0/0"
 }
 
-variable "create_public_ip" {
-  type        = bool
-  description = "Set whether to allocate a public IP address for the bastion instance."
-  default     = true
+variable "allow_tunnel_from" {
+  type        = string
+  description = "(Optional) An IP address or CIDR block that is allowed to connect to the Wireguard Instance tunnel. If none provided then the tunnel is open to `0.0.0.0/0`."
+  default     = "0.0.0.0/0"
 }
 
 variable "client_public_key" {
@@ -55,19 +56,17 @@ variable "client_public_key" {
   description = "Wireguard local client Public Key"
 }
 
-variable "client_preshared_key" {
+variable "client_peer_allowed_ips" {
   type        = string
-  description = "Wireguard local client Preshared Key."
+  description = "The local subnet allowed on the remote side of the connection. For example: 192.168.0.0/24"
 }
 
-variable "client_private_key" {
+variable "owner" {
   type        = string
-  description = "Wireguard local client private key"
+  description = "A username to add as a tag to all deployed resources that support tagging. Tag will be in the format `owner:your_user_name`."
+  default     = "ryantiffany"
 }
 
-variable "existing_bastion_instance" {
-  type        = string
-  description = "Name of an existing bastion instance"
-  default     = ""
+variable "local_ip" {
+  default = "192.168.4.143/32"
 }
-

@@ -1,8 +1,11 @@
 [vpn]
 wireguard ansible_host=${wireguard_instance} ansible_user=root
 
-[vpn:vars]
-ansible_ssh_extra_args='-o "StrictHostKeyChecking=no" -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p root@${bastion}"'
+[instances]
+podman ansible_host=${podman_instance} ansible_user=root
 
-[control]
-local ansible_connection=local
+[instances:vars]
+ansible_ssh_extra_args='-o "StrictHostKeyChecking=no" -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p root@${wireguard_instance}"'
+
+[local]
+control ansible_connection=local

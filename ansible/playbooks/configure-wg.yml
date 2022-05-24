@@ -1,30 +1,73 @@
 ---
-  - hosts: wireguard
+  - name: Install and Configure Wireguard Server
+    hosts: all
     vars_files:
-      vars.yml
+      - vars.yml
+    vars:
+      wireguard_dir: /etc/wireguard
+      wireguard_publickey_path: "{{ wireguard_dir }}/publickey"
+      wireguard_privatekey_path: "{{ wireguard_dir }}/privatekey"
+      wireguard_presharedkey_path: "{{ wireguard_dir }}/presharedkey"
+      server_private_key: ""
+
     tasks:
-      - name: Generate server wireguard keys
-        shell: umask 077; wg genkey | tee {{ wireguard_path }}/privatekey | wg pubkey > {{ wireguard_path }}/publickey
-        run_once: true
-      - name: Generate wireguard preshared key
-        shell: wg genpsk | tee {{ wireguard_path }}/presharedkey
-        register: server_preshared_key
-      - name: Read server private key
+      - name: Test if private key is already present
+        stat:
+          path: "{{ wireguard_privatekey_path }}"
+        register: server_priv_key
+
+      - name: Generate WireGuard private and public keys
+        shell: |
+          set -o pipefail
+          umask 077 && wg genkey | tee {{ wireguard_privatekey_path }} | wg pubkey > {{ wireguard_publickey_path }}
+        args:
+          executable: /bin/bash
+        when: not server_priv_key.stat.exists
+
+      - name: Read publickey
         slurp:
-          src: "{{ wireguard_path }}/privatekey"
-        register: server_private_key
-      - name: Read client public key
+          src: "{{ wireguard_publickey_path }}"
+        register: server_pubkey_value
+
+      - name: Read privatekey
         slurp:
-          src: "{{ wireguard_path }}/publickey"
-        register: server_public_key
+          src: "{{ wireguard_privatekey_path }}"
+        register: server_privkey_value
+
+      - name: Test if preshared key is already present
+        stat:
+          path: "{{ wireguard_presharedkey_path }}"
+        register: server_psk_key
+
+      - name: Generate WireGuard preshared key
+        shell: |
+          set -o pipefail
+          umask 077 && wg genpsk | tee {{ wireguard_presharedkey_path }}
+        args:
+          executable: /bin/bash
+        when: not server_psk_key.stat.exists
+
+      - name: Read presharedkey
+        slurp:
+          src: "{{ wireguard_presharedkey_path }}"
+        register: server_psk_key_value
+
       - name: Template server config 
         template:
-          src: ../templates/wireguard-conf.j2
-          dest: "{{ wireguard_path }}/wg0.conf"
+          src: ../templates/wg0.conf.j2
+          dest: "{{ wireguard_dir }}/wg0.conf"
+        vars:
+          private_key: "{{ server_privkey_value['content'] | b64decode }}"
       - name: Start wireguard tunnel
         shell: wg-quick up wg0
       - name: Enable wg systemd file 
         systemd:
           name: wg-quick@wg0
           enabled: yes
-          state: started
+      - name: Template extended client_config 
+        template:
+          src: ../templates/wg0.client.j2
+          dest: "./client_config"
+        vars:
+          server_public_key: "{{ server_pubkey_value['content'] | b64decode }}"
+        delegate_to: control

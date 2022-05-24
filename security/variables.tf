@@ -1,4 +1,6 @@
-variable "vpc" {}
-variable "resource_group" {}
+variable "vpc_id" {}
+variable "resource_group_id" {}
 variable "name" {}
-variable "bastion_security_group" {}
+variable "allow_tunnel_from" {}
+variable "allow_ssh_from" {}
+variable "tags" {}

@@ -2,8 +2,6 @@
 package_update: true
 package_upgrade: true
 packages:
-    - python
-    - python-apt
     - python3-apt
     - python3-pip
     - build-essential

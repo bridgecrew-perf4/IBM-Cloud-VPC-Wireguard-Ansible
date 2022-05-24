@@ -13,14 +13,12 @@ data "ibm_is_ssh_key" "existing_ssh_key" {
 }
 
 data "ibm_is_vpc" "existing_vpc" {
-  name = var.existing_vpc_name
+  count = var.existing_vpc != "" ? 1 : 0
+  name  = var.existing_vpc
 }
 
 data "ibm_is_subnet" "existing_subnet" {
-  name = var.existing_subnet_name
+  count = var.existing_vpc != "" ? 1 : 0
+  name  = var.existing_subnet_name
 }
 
-data "ibm_is_instance" "existing_bastion" {
-  count = var.existing_bastion_instance != "" ? 1 : 0
-  name  = var.existing_bastion_instance
-}
