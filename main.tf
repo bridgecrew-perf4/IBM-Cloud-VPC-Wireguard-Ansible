@@ -59,13 +59,14 @@ resource "ibm_is_subnet" "backend_subnet" {
 }
 
 module "security" {
-  source            = "./security"
-  name              = var.name
-  vpc_id            = local.vpc_id
-  resource_group_id = local.resource_group
-  allow_ssh_from    = var.allow_ssh_from
-  allow_tunnel_from = var.allow_tunnel_from
-  tags              = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
+  source                  = "./security"
+  name                    = var.name
+  vpc_id                  = local.vpc_id
+  resource_group_id       = local.resource_group
+  allow_ssh_from          = var.allow_ssh_from
+  allow_tunnel_from       = var.allow_tunnel_from
+  client_peer_allowed_ips = var.client_peer_allowed_ips
+  tags                    = concat(var.tags, ["project:${var.name}", "owner:${var.owner}", "region:${var.region}"])
 }
 
 module "wireguard_server" {

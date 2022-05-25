@@ -22,7 +22,7 @@ variable "instance_profile" {
 variable "instance_image" {
   type        = string
   description = "The default OS image to load on to the compute instances."
-  default     = "ibm-ubuntu-22-04-minimal-amd64-1"
+  default     = "u22-base-image"
 }
 
 variable "user_data" {
