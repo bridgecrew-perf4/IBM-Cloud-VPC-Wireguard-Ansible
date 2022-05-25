@@ -1,5 +1,5 @@
 ---
-  - name: Install and Configure Wireguard Server
+  - name: Configure Wireguard Server and Generate Client Config Snippet
     hosts: all
     vars_files:
       - vars.yml
@@ -8,10 +8,9 @@
       wireguard_publickey_path: "{{ wireguard_dir }}/publickey"
       wireguard_privatekey_path: "{{ wireguard_dir }}/privatekey"
       wireguard_presharedkey_path: "{{ wireguard_dir }}/presharedkey"
-      server_private_key: ""
 
     tasks:
-      - name: Test if private key is already present
+      - name: Test if Wireguard private key is already present
         stat:
           path: "{{ wireguard_privatekey_path }}"
         register: server_priv_key
@@ -60,6 +59,8 @@
           private_key: "{{ server_privkey_value['content'] | b64decode }}"
       - name: Start wireguard tunnel
         shell: wg-quick up wg0
+        register: tunnel_started
+        when: tunnel_started is defined
       - name: Enable wg systemd file 
         systemd:
           name: wg-quick@wg0

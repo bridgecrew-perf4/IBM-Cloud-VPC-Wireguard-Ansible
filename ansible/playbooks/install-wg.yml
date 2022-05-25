@@ -16,6 +16,15 @@
           path: /etc/sysctl.conf
           block: |
             net.ipv4.ip_forward=1
-      - name: Reboot machine
+      - name: Enable WireGuard kernel module
+        modprobe:
+          name: wireguard
+          state: present
+        register: wireguard_module_enabled
+        until: wireguard_module_enabled is succeeded
+        retries: 10
+        delay: 10
+        failed_when: wireguard_module_enabled is failure
+      - name: Reboot machine to pick up changes
         reboot:
           reboot_timeout: 120
