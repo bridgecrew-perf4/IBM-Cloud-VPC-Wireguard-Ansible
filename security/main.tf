@@ -31,6 +31,12 @@ resource "ibm_is_security_group_rule" "frontend_all_to_self" {
   remote    = ibm_is_security_group.frontend_security_group.id
 }
 
+resource "ibm_is_security_group_rule" "frontend_from_remote_end" {
+  group     = ibm_is_security_group.frontend_security_group.id
+  direction = "inbound"
+  remote    = var.client_peer_allowed_ips
+}
+
 resource "ibm_is_security_group_rule" "frontend_inbound_from_backend" {
   group     = ibm_is_security_group.frontend_security_group.id
   direction = "inbound"
@@ -41,10 +47,7 @@ resource "ibm_is_security_group_rule" "frontend_ping_inbound" {
   group     = ibm_is_security_group.frontend_security_group.id
   direction = "inbound"
   remote    = "0.0.0.0/0"
-  icmp {
-    type = 8
-    code = 0
-  }
+  icmp {}
 }
 
 resource "ibm_is_security_group_rule" "frontend_all_out" {

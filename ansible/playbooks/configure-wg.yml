@@ -57,18 +57,22 @@
           dest: "{{ wireguard_dir }}/wg0.conf"
         vars:
           private_key: "{{ server_privkey_value['content'] | b64decode }}"
+        register: server_wireguard_config
+        when: server_wireguard_config is not defined
       - name: Start wireguard tunnel
         shell: wg-quick up wg0
         register: tunnel_started
-        when: tunnel_started is defined
+        when: tunnel_started is not defined
       - name: Enable wg systemd file 
         systemd:
           name: wg-quick@wg0
           enabled: yes
+        register: service_enabled
+        when: service_enabled is not defined
       - name: Template extended client_config 
         template:
           src: ../templates/wg0.client.j2
-          dest: "./client_config"
+          dest: "../../client_config"
         vars:
           server_public_key: "{{ server_pubkey_value['content'] | b64decode }}"
         delegate_to: control

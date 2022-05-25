@@ -27,4 +27,4 @@
         failed_when: wireguard_module_enabled is failure
       - name: Reboot machine to pick up changes
         reboot:
-          reboot_timeout: 120
+          reboot_timeout: 30

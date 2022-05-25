@@ -3,7 +3,7 @@ Address = {{ local_ip }}
 [Peer]
 PublicKey = {{ server_public_key }}
 Endpoint = {{ wireguard_instance }}:51820
-AllowedIPs = 166.8.0.0/14, 166.9.0.0/14, 172.16.0.0/24, {{ frontend_subnet }}, {{ backend_subnet }}
+AllowedIPs = 166.8.0.0/14, 166.9.0.0/14, 172.16.0.0/24, {{ frontend_subnet_cidr }}, {{ backend_subnet_cidr }}
 
 
 

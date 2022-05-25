@@ -1,3 +1,4 @@
 data "ibm_is_image" "base" {
-  name = var.instance_image
+  visibility = "private"
+  name       = var.instance_image
 }
